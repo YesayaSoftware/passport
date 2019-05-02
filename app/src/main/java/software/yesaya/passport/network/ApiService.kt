@@ -1,10 +1,13 @@
 package software.yesaya.passport.network
 
+import com.google.gson.JsonElement
+import io.reactivex.Observable
 import retrofit2.Call
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.POST
 import software.yesaya.passport.internal.AccessToken
+import java.util.*
 
 interface ApiService {
 
@@ -14,7 +17,7 @@ interface ApiService {
 
     @POST("login")
     @FormUrlEncoded
-    fun login(@Field("email") username: String, @Field("password") password: String): Call<AccessToken>
+    fun login(@Field("email") username: String, @Field("password") password: String): Observable<AccessToken>
 
     @POST("social_auth")
     @FormUrlEncoded
