@@ -8,6 +8,8 @@ import android.util.Patterns
 import android.view.View
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
 import androidx.transition.TransitionManager
 import com.basgeekball.awesomevalidation.AwesomeValidation
 import com.basgeekball.awesomevalidation.ValidationStyle
@@ -25,6 +27,9 @@ import software.yesaya.passport.internal.TokenManager
 import software.yesaya.passport.internal.Utils
 import software.yesaya.passport.network.ApiService
 import software.yesaya.passport.network.RetrofitBuilder
+import software.yesaya.passport.viewmodels.LoginViewModel
+import software.yesaya.passport.viewmodels.ViewModelFactory
+import javax.inject.Inject
 
 class LoginActivity :  AppCompatActivity() {
     private val TAG = "LoginActivity"
@@ -33,6 +38,9 @@ class LoginActivity :  AppCompatActivity() {
     var call: Call<AccessToken>? = null
     var validator: AwesomeValidation? = null
     var tokenManager: TokenManager? = null
+    @Inject
+    lateinit var mViewModelFactory: ViewModelFactory
+    private lateinit var mLoginViewModel: LoginViewModel
 
     var formContainer: LinearLayout? = null
     //var facebookManager : FacebookManager = null
@@ -40,7 +48,18 @@ class LoginActivity :  AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
+        MyApp.appComponent.inject(this)
 
+        mLoginViewModel =
+            ViewModelProviders.of(this@LoginActivity, mViewModelFactory).get(LoginViewModel::class.java)
+
+        mLoginViewModel.getLoginStatus().observe(this@LoginActivity, Observer {
+            Log.d("TESTINGG On", ""+it.accessToken)
+            tokenManager?.saveToken(it)
+            showForm()
+            startActivity(Intent(this@LoginActivity, MainActivity::class.java))
+            finish()
+        })
 
         service = RetrofitBuilder.createService(ApiService::class.java)
         validator = AwesomeValidation(ValidationStyle.TEXT_INPUT_LAYOUT)
@@ -65,7 +84,9 @@ class LoginActivity :  AppCompatActivity() {
             if (validator?.validate()!!) {
                 showLoading()
 
-                call = service!!.login(email, password)
+                mLoginViewModel.callLoginStatus(email,password)
+
+                /*call = service!!.login(email, password)
 
                 call!!.enqueue(object : Callback<AccessToken> {
                     override fun onResponse(call: Call<AccessToken>, response: Response<AccessToken>) {
@@ -87,7 +108,7 @@ class LoginActivity :  AppCompatActivity() {
                         Log.w(TAG, "onFailure: " + t.message)
                         showForm()
                     }
-                })
+                })*/
             }
         }
 
